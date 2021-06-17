@@ -1,0 +1,144 @@
+---
+title: 'Tidy Tuesday #4'
+author: "Put your name here"
+output: 
+  html_document:
+    df_print: paged
+    code_download: true
+    theme: cerulean
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
+```
+
+```{r libraries}
+library(tidyverse)     # for graphing and data cleaning
+library(lubridate)     # for date manipulation
+library(ggthemes)      # for even more plotting themes
+theme_set(theme_minimal()) # My favorite ggplot() theme :)
+```
+
+```{r}
+# Read in the data for the week - this is choice #1
+
+tweets <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-06-15/tweets.csv')
+
+# If the code above gives an error, uncomment the code below and use it instead. 
+# You will need to install the tidytuesdayR package first, if you haven't already. 
+
+
+# library(tidytuesdayR)
+# 
+# tuesdata <- tidytuesdayR::tt_load(2021, week = 25)
+# tweets <- tuesdata$tweets
+
+
+```
+
+
+This week's data is about the W.E.B DuBois challenge which was held earlier this year. You have two choices today: 1. You can analyze the tweet data for this week. 2. Try to replicate one of W.E.B. DuBois's graphs. 
+
+
+I don't really know what is this challange so I looked it up on the internet but still was unable to understand what exactly was the initial data about, however, I saw the many people replicated the initial graphs or focused on the most retweeted / liked users. I am interested in what makes something popular on the internet, and it seems like the formula is different for each platform, one thing twitter is famous for is its restrictive number of characters that a person can use, so I decided to investigate how the number of characters influences how a tweet is received because this question interests me and I saw no one doing something like it for this challenge.
+
+
+A measure of how well a tweet is recieved is the number of times it was engaged with, that is how many times it was retweeted and liked and quoted, so I combined these into a variable, and compared them to the number of characters a tweet has(my theory is that low character and maximum character count would be less engaged with):
+
+```{r}
+tweets %>% 
+  mutate(nchar = nchar(content), #counts characters
+         total_engagement = retweet_count + like_count + quote_count) %>% 
+  arrange(desc(nchar)) %>% 
+  ggplot(aes(x = nchar,
+             y = total_engagement)) +
+  geom_col()
+```
+
+
+There seems to be a few outliers that are making the information harder to read from the graph, therefore, I will remove tweets that had total_engagement that is more than 200.
+
+```{r}
+
+tweets %>% 
+  mutate(nchar = nchar(content),
+         total_engagement = retweet_count + like_count + quote_count) %>% 
+  arrange(desc(nchar)) %>% 
+  filter(total_engagement <200) %>% 
+  ggplot(aes(x = nchar,
+             y = total_engagement)) +
+  geom_col(fill = "#c3ad93") +
+  theme(
+      panel.background = element_rect(fill = "#83543f", colour = "#83543f"),
+  panel.grid.major = element_line(colour = "#83543f"), 
+  panel.grid.minor = element_line(colour = "#83543f"),
+  plot.background = element_rect(fill = "#83543f"),
+  text = element_text(color = "#e0e3d6"),
+  axis.text.x = element_text(color = "#c3ad93"),
+  axis.text.y = element_text(color = "#c3ad93")
+  ) +
+  labs(
+    title = "How a tweet's length effects engagement?",
+    x = "Tweet Length (charechter)",
+    y = "Tweet's Engagement"
+  )
+```
+
+Although I can see a trend towards tweets with higher character. We can see that most of the Tweets that had over 75 engagements were ones on the higher end of the spectrum regarding character count. To better view the results I used `geom_smooth()` that can help explain the relationship between character count and engagement
+
+```{r}
+tweets %>% 
+  mutate(nchar = nchar(content),
+         total_engagement = retweet_count + like_count + quote_count) %>% 
+  arrange(desc(nchar)) %>% 
+  filter(total_engagement <200) %>% 
+  ggplot(aes(x = nchar,
+             y = total_engagement)) +
+  geom_col(fill = "#c3ad93") +
+  geom_smooth(color = "#e0e3d6") +
+    theme(
+      panel.background = element_rect(fill = "#83543f", colour = "#83543f"),
+  panel.grid.major = element_line(colour = "#83543f"), 
+  panel.grid.minor = element_line(colour = "#83543f"),
+  plot.background = element_rect(fill = "#83543f"),
+  text = element_text(color = "#e0e3d6"),
+  axis.text.x = element_text(color = "#c3ad93"),
+  axis.text.y = element_text(color = "#c3ad93")
+  ) +
+  labs(
+    title = "How a tweet's length effects engagement?",
+    x = "Tweet Length (charechter)",
+    y = "Tweet's Engagement"
+  )
+```
+I know that twitter maximum charachter counr is less than some of the tweets here and is 280 charachters, I am unsure why I have some values here that have higher numbers, I tried counting manually and I got the same values as my `nchar()`function. I will filter the tweets that are higher than the limit to see if there is any differance to the results.
+
+```{r}
+
+tweets %>% 
+  mutate(nchar = nchar(content),
+         total_engagement = retweet_count + like_count + quote_count) %>% 
+  arrange(desc(nchar)) %>% 
+  filter(total_engagement <200 & nchar < 280) %>% 
+  ggplot(aes(x = nchar,
+             y = total_engagement)) +
+  geom_col(fill = "#c3ad93") +
+  geom_smooth(color = "#e0e3d6") +
+    theme(
+      panel.background = element_rect(fill = "#83543f", colour = "#83543f"),
+  panel.grid.major = element_line(colour = "#83543f"), 
+  panel.grid.minor = element_line(colour = "#83543f"),
+  plot.background = element_rect(fill = "#83543f"),
+  text = element_text(color = "#e0e3d6"),
+  axis.text.x = element_text(color = "#c3ad93"),
+  axis.text.y = element_text(color = "#c3ad93")
+  ) +
+  labs(
+    title = "How a tweet's length effects engagement?",
+    x = "Tweet Length (charechter)",
+    y = "Tweet's Engagement"
+  )
+```
+
+
+There is no significant differance to the results from previous graphs.   
